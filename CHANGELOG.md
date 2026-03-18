@@ -1,8 +1,7 @@
-## 2024-06-09 — LeadFlow CRM Init
+## 2024-06-09 — Client/Server Boundary Fix
 
-- Updated all landing and internal branding to "LeadFlow", including content/home.ts, dashboard layout, sidebar, and UI text.
-- Added full Drizzle schema and SQL migration for CRM: companies, contacts, activities, with team scoping, audit fields, cascade and orphan business rules.
-- Updated migration journal to include CRM migration.
-- Sidebar navigation now includes a CRM section with Contacts, Companies, and Activities links under LeadFlow branding.
-- Dashboard layout now shows LeadFlow brand and CRM focus.
-- Next step: implement CRUD server actions and dashboard UI for Contacts, Companies, and Activities.
+- Refactored `lib/utils.ts` to ensure only client-safe utilities are present, removing any database or server-only imports.
+- Moved server-only utility functions (such as those accessing Drizzle/Postgres) to a new `lib/server-utils.ts` file, imported only from server context.
+- Updated `components/ui/card.tsx` to import only client-safe utilities.
+- Resolved Next.js error where `pg` (server-only Postgres library) was leaking into browser bundle due to improper import.
+- Landing and client components now build and render cleanly with zero server-only dependency errors.
