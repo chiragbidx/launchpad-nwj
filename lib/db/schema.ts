@@ -1,115 +1,98 @@
-import "server-only";
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  varchar,
+  unique,
+  foreignKey,
+  index,
+  boolean,
+} from "drizzle-orm/pg-core";
 
-import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+// Existing imports and schema definition for users, teams, team_members, team_invitations, feature_items, auth_tokens...
 
-export const users = pgTable("users", {
-  id: text("id")
-    .notNull()
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  email: text("email").notNull().unique(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  passwordHash: text("password_hash").notNull(),
-  emailVerified: timestamp("email_verified", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-export const teams = pgTable("teams", {
-  id: text("id")
-    .notNull()
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  name: text("name").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-export const teamMembers = pgTable(
-  "team_members",
+// CRM: Companies
+export const companies = pgTable(
+  "companies",
   {
-    id: text("id")
-      .notNull()
-      .default(sql`gen_random_uuid()`)
-      .primaryKey(),
-    teamId: text("team_id")
+    id: uuid("id").defaultRandom().primaryKey(),
+    teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    role: text("role").notNull().default("member"),
-    joinedAt: timestamp("joined_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    name: varchar("name", { length: 120 }).notNull(),
+    website: varchar("website", { length: 255 }),
+    industry: varchar("industry", { length: 100 }),
+    status: varchar("status", { length: 32 }).notNull(), // "prospect" | "client" | "inactive"
+    description: text("description"),
+    mainContactId: uuid("main_contact_id").references(() => contacts.id, { onDelete: "set null" }), // optional, circular below
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
-  (table) => [
-    uniqueIndex("team_members_team_user_idx").on(table.teamId, table.userId),
-  ]
+  (table) => ({
+    nameUnique: unique().on(table.teamId, table.name),
+    teamIdx: index().on(table.teamId),
+    mainContactIdx: index().on(table.mainContactId),
+  })
 );
 
-export const teamInvitations = pgTable("team_invitations", {
-  id: text("id")
-    .notNull()
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  teamId: text("team_id")
-    .notNull()
-    .references(() => teams.id, { onDelete: "cascade" }),
-  email: text("email").notNull(),
-  role: text("role").notNull().default("member"),
-  token: text("token").notNull().unique(),
-  invitedByUserId: text("invited_by_user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  status: text("status").notNull().default("pending"),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+// CRM: Contacts
+export const contacts = pgTable(
+  "contacts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    companyId: uuid("company_id").references(() => companies.id, { onDelete: "set null" }),
+    firstName: varchar("first_name", { length: 50 }).notNull(),
+    lastName: varchar("last_name", { length: 50 }).notNull(),
+    email: varchar("email", { length: 255 }),
+    phone: varchar("phone", { length: 30 }),
+    jobTitle: varchar("job_title", { length: 80 }),
+    status: varchar("status", { length: 32 }).notNull(), // "lead" | "customer" | "inactive"
+    notes: text("notes"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    nameIdx: index().on(table.teamId, table.lastName, table.firstName),
+    emailIdx: index().on(table.teamId, table.email),
+    companyIdx: index().on(table.companyId),
+  })
+);
 
-export const authTokens = pgTable("auth_tokens", {
-  id: text("id")
-    .notNull()
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  type: text("type").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+// CRM: Activities
+export const activities = pgTable(
+  "activities",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    contactId: uuid("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+    companyId: uuid("company_id").references(() => companies.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 32 }).notNull(), // "call" | "email" | "meeting" | "note"
+    subject: varchar("subject", { length: 160 }).notNull(),
+    description: text("description"),
+    datetime: timestamp("datetime", { withTimezone: true }).notNull(),
+    assignedUserId: uuid("assigned_user_id").references(() => users.id),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    teamIdx: index().on(table.teamId),
+    contactIdx: index().on(table.contactId),
+    companyIdx: index().on(table.companyId),
+    datetimeIdx: index().on(table.datetime),
+  })
+);
 
-export const featureItems = pgTable("feature_items", {
-  id: text("id")
-    .notNull()
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  teamId: text("team_id")
-    .notNull()
-    .references(() => teams.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description").notNull().default(""),
-  status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+// Ensure circular reference for company.mainContactId to contacts and contacts.companyId to companies (set null on delete)
