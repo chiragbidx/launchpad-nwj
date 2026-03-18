@@ -1,52 +1,28 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Icon } from "@/components/ui/icon";
-import { getHomeContent } from "@/content/home";
+import { homeContent } from "@/content/home";
 
-const { benefits } = getHomeContent();
+export function LayoutBenefitsSection() {
+  const { features } = homeContent;
 
-export const LayoutBenefitsSection = () => {
   return (
-    <section id="benefits" className="container py-24 sm:py-32">
-      <div className="grid lg:grid-cols-2 place-items-center lg:gap-24">
-        <div>
-          <h2 className="text-lg text-primary mb-2 tracking-wider">{benefits.eyebrow}</h2>
-
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {benefits.heading}
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            {benefits.description}
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-4 w-full">
-          {benefits.items.map(({ icon, title, description }, index) => (
-            <Card
-              key={title}
-              className="bg-muted/50 dark:bg-card hover:bg-background transition-all delay-75 group/number"
-            >
-              <CardHeader>
-                <div className="flex justify-between">
-                  <Icon
-                    name={icon}
-                    size={32}
-                    className="mb-6 text-primary"
-                  />
-                  <span className="text-5xl text-muted-foreground/15 font-medium transition-all delay-75 group-hover/number:text-muted-foreground/30">
-                    0{index + 1}
-                  </span>
+    <section className="py-16" id="benefits">
+      <div className="max-w-5xl mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-12">CRM Benefits</h2>
+        <div className="grid md:grid-cols-2 gap-10">
+          {features.map((feature, idx) => (
+            <div key={idx} className="p-6 rounded-xl bg-muted border flex gap-4 items-start">
+              {/* Optionally render Lucide icon here if `icon` property */}
+              <div>
+                <div className="bg-primary/10 text-primary rounded-full w-10 h-10 flex items-center justify-center mb-3">
+                  {/* If icon exists, render it */}
+                  {/* Could later add icon mapping: https://lucide.dev/icons */}
                 </div>
-
-                <CardTitle>{title}</CardTitle>
-              </CardHeader>
-
-              <CardContent className="text-muted-foreground">
-                {description}
-              </CardContent>
-            </Card>
+                <div className="text-lg font-semibold mb-1">{feature.title}</div>
+                <div className="text-muted-foreground">{feature.description}</div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
     </section>
   );
-};
+}
