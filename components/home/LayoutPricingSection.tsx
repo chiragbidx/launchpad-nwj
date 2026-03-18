@@ -1,79 +1,39 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Check } from "lucide-react";
-import { getHomeContent } from "@/content/home";
+import { homeContent } from "@/content/home";
 
-const { pricing } = getHomeContent();
+export function LayoutPricingSection() {
+  const { pricing } = homeContent;
 
-export const LayoutPricingSection = () => {
   return (
-    <section id="pricing" className="container py-24 sm:py-32">
-      <h2 className="text-lg text-primary text-center mb-2 tracking-wider">
-        {pricing.eyebrow}
-      </h2>
-
-      <h2 className="text-3xl md:text-4xl text-center font-bold mb-4">
-        {pricing.heading}
-      </h2>
-
-      <h3 className="md:w-1/2 mx-auto text-xl text-center text-muted-foreground pb-14">
-        {pricing.subtitle}
-      </h3>
-
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-4">
-        {pricing.plans.map(
-          ({ title, popular, price, description, buttonText, benefits }) => (
-            <Card
-              key={title}
-              className={
-                popular
-                  ? "drop-shadow-xl shadow-black/10 dark:shadow-white/10 border-[1.5px] border-primary lg:scale-[1.1]"
-                  : ""
-              }
+    <section className="py-16" id="pricing">
+      <div className="max-w-5xl mx-auto px-6">
+        <h2 className="text-3xl font-bold text-center mb-8">Pricing Plans</h2>
+        <div className="grid md:grid-cols-3 gap-8">
+          {pricing.plans.map((plan) => (
+            <div
+              key={plan.name}
+              className="bg-card p-8 rounded-xl border shadow-sm flex flex-col items-center"
             >
-              <CardHeader>
-                <CardTitle className="pb-2">{title}</CardTitle>
-
-                <CardDescription className="pb-4">
-                  {description}
-                </CardDescription>
-
-                <div>
-                  <span className="text-3xl font-bold">${price}</span>
-                  <span className="text-muted-foreground"> {pricing.priceSuffix}</span>
-                </div>
-              </CardHeader>
-
-              <CardContent className="flex">
-                <div className="space-y-4">
-                  {benefits.map((benefit) => (
-                    <span key={benefit} className="flex">
-                      <Check className="text-primary mr-2" />
-                      <h3>{benefit}</h3>
-                    </span>
-                  ))}
-                </div>
-              </CardContent>
-
-              <CardFooter>
-                <Button
-                  variant={popular ? "default" : "secondary"}
-                  className="w-full"
-                >
-                  {buttonText}
-                </Button>
-              </CardFooter>
-            </Card>
-          )
+              <h3 className="text-xl font-semibold mb-4">{plan.name}</h3>
+              <div className="text-3xl font-bold text-primary mb-2">{plan.price}</div>
+              <ul className="space-y-2 mb-6">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="text-muted-foreground">
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <button className="bg-primary text-white px-6 py-2 rounded-lg font-semibold transition hover:bg-primary/90">
+                Get started
+              </button>
+            </div>
+          ))}
+        </div>
+        {pricing.note && (
+          <div className="mt-8 text-center text-muted-foreground text-sm">
+            {pricing.note}
+          </div>
         )}
       </div>
     </section>
   );
-};
+}
